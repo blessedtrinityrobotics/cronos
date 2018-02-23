@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.transition.Slide;
+
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -63,6 +65,9 @@ public class DriverTeleOp extends LinearOpMode {
     private DcMotor rightDriveFrt = null;
     private DcMotor rightDriveBck = null;
     private DcMotor Elevator = null;
+    private DcMotor LinSlideUpDown = null;
+    private DcMotor LinSlideMotor = null;
+
 
     private Servo leftGrip = null;
     private Servo rightGrip = null;
@@ -93,6 +98,10 @@ public class DriverTeleOp extends LinearOpMode {
             leftGrip = hardwareMap.get(Servo.class, "left_grip");
             //JouleArm = hardwareMap.get(Servo.class, "joule_arm");
             balance = hardwareMap.get(Servo.class, "balance");
+            LinSlideUpDown = hardwareMap.get(DcMotor.class, "LinSlideUpDown");
+            LinSlideMotor = hardwareMap.get(DcMotor.class, "LinSlideMotor");
+
+
 
             // Most robots need the motor on one side to be reversed to drive forward
             // Reverse the motor that runs backwards when connected directly to the battery
@@ -101,6 +110,8 @@ public class DriverTeleOp extends LinearOpMode {
             leftDriveBck.setDirection(DcMotor.Direction.FORWARD);
             rightDriveBck.setDirection(DcMotor.Direction.REVERSE);
             Elevator.setDirection(DcMotorSimple.Direction.FORWARD);
+            LinSlideMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+            LinSlideUpDown.setDirection(DcMotorSimple.Direction.FORWARD);
 
             telemetry.addData("test","in here!");
 
@@ -133,13 +144,17 @@ public class DriverTeleOp extends LinearOpMode {
                 double turn = gamepad1.left_stick_x;
                 double lift = -gamepad2.left_stick_y;
                 //double servo = gamepad2.right_stick_y;
-                double JouleArm = gamepad2.right_stick_y;
+                //double JouleArm = gamepad2.right_stick_y;
+                double SlideOut = gamepad2.right_stick_y;
+                double SlideLift = gamepad2.right_stick_x;
 
                 double leftFrontPower = forward - right + turn;
                 double leftBackPower = forward + right + turn;
                 double rightFrontPower = forward + right - turn;
                 double rightBackPower = forward - right - turn;
                 double elevatorPower = lift;
+                double SlidePower = SlideOut;
+                double SlideLiftPower = SlideLift;
                 //double servoPower = servo;
 
                 leftFrontPower = Range.clip(leftFrontPower, -1.0, 1.0);
@@ -148,6 +163,9 @@ public class DriverTeleOp extends LinearOpMode {
                 rightBackPower = Range.clip(rightBackPower, -1.0, 1.0);
                 elevatorPower = Range.clip(elevatorPower, -1.0, 1.0);
                 //servoPower = Range.clip(servoPower. -1.0, 1.0);
+                SlidePower = Range.clip(SlidePower, -1.0, 1.0);
+                SlideLiftPower = Range.clip(SlideLiftPower, -1.0, 1.0);
+
 
                 // Send calculated power to wheels
                 //leftDriveFrt is Motor 0
@@ -159,11 +177,13 @@ public class DriverTeleOp extends LinearOpMode {
                 //leftDriveBck is Motor 3
                 rightDriveBck.setPower(rightBackPower);
                 Elevator.setPower(elevatorPower);
+                LinSlideMotor.setPower(SlidePower);
+                LinSlideUpDown.setPower(SlideLiftPower);
 
                 //Copyright Carlos (C)
                 //Moves servos to a certain position on keypress
-                //leftGrip.setPosition(-0.4);
-                //rightGrip.setPosition(1.0);
+                //topLeftGrip.setPosition(-0.4);
+                //topRightGrip.setPosition(1.0);
                 if ( gamepad2.y){
                     leftGrip.setPosition(0);
                     rightGrip.setPosition(1);

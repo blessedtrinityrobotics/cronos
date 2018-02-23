@@ -36,6 +36,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 
 
 /**
@@ -52,7 +54,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="Back Servos Calibration", group="Linear Opmode")
-//@Disabled
+@Disabled
 public class BackServosCalibration extends LinearOpMode {
 
     // Declare OpMode members.
@@ -190,15 +192,15 @@ public class BackServosCalibration extends LinearOpMode {
                 //servo - grip
 /*                if (Math.abs(gamepad2.right_stick_y)  > 0.06){
                     double gripPos = ((-gamepad2.right_stick_y+1.0)/2);
-                    leftGrip.setPosition(gripPos);
-                    rightGrip.setPosition(1.0 - gripPos);
+                    topLeftGrip.setPosition(gripPos);
+                    topRightGrip.setPosition(1.0 - gripPos);
                 }
 */
 
                 //Copyright Carlos (C)
                 //Moves servos to a certain position on keypress
-                //leftGrip.setPosition(-0.4);
-                //rightGrip.setPosition(1.0);
+                //topLeftGrip.setPosition(-0.4);
+                //topRightGrip.setPosition(1.0);
                 if(gamepad1.a){
                     balance.setPosition(balanceopen);
                 }

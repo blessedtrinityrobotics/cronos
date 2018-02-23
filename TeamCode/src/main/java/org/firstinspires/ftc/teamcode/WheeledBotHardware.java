@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -21,11 +22,11 @@ public class WheeledBotHardware extends OpMode {
 
     final double LEFT_OPEN_WIDE_POSITION  =  0.0;
     final double LEFT_OPEN_POSITION       =  0.3;
-    final double LEFT_CLOSED_POSITION     =  0.515;
+    final double LEFT_CLOSED_POSITION     =  0.535;
     final double LEFT_PUSH_POSITION       =  0.9;
     final double RIGHT_OPEN_WIDE_POSITION =  1.0;
     final double RIGHT_OPEN_POSITION      =  0.7;
-    final double RIGHT_CLOSED_POSITION    =  0.485;
+    final double RIGHT_CLOSED_POSITION    =  0.465;
     final double RIGHT_PUSH_POSITION      =  0.9;
 
     final double BALANCE_UP            = 0.9;
@@ -39,13 +40,19 @@ public class WheeledBotHardware extends OpMode {
     DcMotor rightRearMotor;
     DcMotor rightFrontMotor;
     DcMotor elvMotor;
-    Servo leftGrip;
-    Servo rightGrip;
+    Servo topLeftGrip;
+    Servo topRightGrip;
+    Servo bottomLeftGrip;
+    Servo bottomRightGrip;
     Servo balance;
     Servo joule;
+    Servo relic;
+
+    BNO055IMU imu;
     GyroSensor gyroSensor;
     ColorSensor colorSensor;
-
+    DcMotor LinSlideUpDown = null;
+    DcMotor LinSlideMotor = null;
 
     TouchSensor armTouch;
     TouchSensor beaconTouch;
@@ -131,16 +138,30 @@ public class WheeledBotHardware extends OpMode {
         } catch (Exception ex) {
             sb.append("ERR ");
         }
-        sb.append("left_grip: ");
+        sb.append("tl_grip: ");
         try {
-            leftGrip = hardwareMap.servo.get("left_grip");
+            topLeftGrip = hardwareMap.servo.get("tl_grip");
             sb.append("OK ");
         } catch (Exception ex) {
             sb.append("ERR ");
         }
-        sb.append("right_grip: ");
+        sb.append("tr_grip: ");
         try {
-            rightGrip = hardwareMap.servo.get("right_grip");
+            topRightGrip = hardwareMap.servo.get("tr_grip");
+            sb.append("OK ");
+        } catch (Exception ex) {
+            sb.append("ERR ");
+        }
+        sb.append("bl_grip: ");
+        try {
+            bottomLeftGrip = hardwareMap.servo.get("bl_grip");
+            sb.append("OK ");
+        } catch (Exception ex) {
+            sb.append("ERR ");
+        }
+        sb.append("br_grip: ");
+        try {
+            bottomRightGrip = hardwareMap.servo.get("br_grip");
             sb.append("OK ");
         } catch (Exception ex) {
             sb.append("ERR ");
@@ -159,9 +180,16 @@ public class WheeledBotHardware extends OpMode {
         } catch (Exception ex) {
             sb.append("ERR ");
         }
-        sb.append("gyro ");
+        sb.append("relic: ");
         try {
-            gyroSensor = hardwareMap.gyroSensor.get("gyro");
+            relic = hardwareMap.servo.get("relic");
+            sb.append("OK ");
+        } catch (Exception ex) {
+            sb.append("ERR ");
+        }
+        sb.append("ime ");
+        try {
+            //gyroSensor = hardwareMap..get("gyro");
             sb.append("OK ");
         } catch (Exception ex) {
             sb.append("ERR ");
@@ -173,6 +201,21 @@ public class WheeledBotHardware extends OpMode {
         } catch (Exception ex) {
             sb.append("ERR ");
         }
+        sb.append("sliup ");
+        try {
+            LinSlideUpDown = hardwareMap.get(DcMotor.class, "LinSlideUpDown");
+            sb.append("OK ");
+        } catch (Exception ex) {
+            sb.append("ERR ");
+        }
+        sb.append("slimot ");
+        try {
+            LinSlideMotor = hardwareMap.get(DcMotor.class, "LinSlideMotor");
+            sb.append("OK ");
+        } catch (Exception ex) {
+            sb.append("ERR ");
+        }
+
 //        sb.append("optical ");
 //        try {
 //            opticalDistanceSensor = hardwareMap.opticalDistanceSensor.get("optical");
@@ -256,50 +299,66 @@ public class WheeledBotHardware extends OpMode {
      * Set the gripper to open position.
      */
     void openWideGripper() {
-        if (leftGrip != null)
-            leftGrip.setPosition(LEFT_OPEN_WIDE_POSITION);
-        if (rightGrip != null)
-            rightGrip.setPosition(RIGHT_OPEN_WIDE_POSITION);
+        if (topLeftGrip != null)
+            topLeftGrip.setPosition(LEFT_OPEN_WIDE_POSITION);
+        if (topRightGrip != null)
+            topRightGrip.setPosition(RIGHT_OPEN_WIDE_POSITION);
+        if (bottomLeftGrip != null)
+            bottomLeftGrip.setPosition(LEFT_OPEN_WIDE_POSITION);
+        if (bottomRightGrip != null)
+            bottomRightGrip.setPosition(RIGHT_OPEN_WIDE_POSITION);
     }
 
     /**
      * Set the gripper to open position.
      */
     void openGripper() {
-        if (leftGrip != null)
-            leftGrip.setPosition(LEFT_OPEN_POSITION);
-        if (rightGrip != null)
-            rightGrip.setPosition(RIGHT_OPEN_POSITION);
+        if (topLeftGrip != null)
+            topLeftGrip.setPosition(LEFT_OPEN_POSITION);
+        if (topRightGrip != null)
+            topRightGrip.setPosition(RIGHT_OPEN_POSITION);
+        if (bottomLeftGrip != null)
+            bottomLeftGrip.setPosition(LEFT_OPEN_POSITION);
+        if (bottomRightGrip != null)
+            bottomRightGrip.setPosition(RIGHT_OPEN_POSITION);
     }
 
     /**
      * Set the gripper to close position.
      */
     void closeGripper() {
-        if (leftGrip != null)
-            leftGrip.setPosition(LEFT_CLOSED_POSITION);
-        if (rightGrip != null)
-            rightGrip.setPosition(RIGHT_CLOSED_POSITION);
+        if (topLeftGrip != null)
+            topLeftGrip.setPosition(LEFT_CLOSED_POSITION);
+        if (topRightGrip != null)
+            topRightGrip.setPosition(RIGHT_CLOSED_POSITION);
+        if (bottomLeftGrip != null)
+            bottomLeftGrip.setPosition(LEFT_CLOSED_POSITION);
+        if (bottomRightGrip != null)
+            bottomRightGrip.setPosition(RIGHT_CLOSED_POSITION);
     }
 
     /**
      * Set the right gripper to push position.
      */
     void pushRightGripper() {
-        if (rightGrip != null)
-            rightGrip.setPosition(RIGHT_PUSH_POSITION);
+        if (topRightGrip != null)
+            topRightGrip.setPosition(RIGHT_PUSH_POSITION);
+        if (bottomRightGrip != null)
+            bottomRightGrip.setPosition(RIGHT_PUSH_POSITION);
     }
 
     /**
      * Set the left gripper to push position.
      */
     void pushLeftGripper() {
-        if (leftGrip != null)
-            leftGrip.setPosition(LEFT_PUSH_POSITION);
+        if (topLeftGrip != null)
+            topLeftGrip.setPosition(LEFT_PUSH_POSITION);
+        if (bottomLeftGrip != null)
+            bottomLeftGrip.setPosition(LEFT_PUSH_POSITION);
     }
 
     /**
-     * Raise the balance.
+     * Raise the balance
      */
     void balanceUp()
     {
@@ -333,6 +392,8 @@ public class WheeledBotHardware extends OpMode {
         if ( joule != null)
             joule.setPosition(JOULE_DOWN);
     }
+
+
 
     /**
      * Move the arm with the specified power: positive value raises the arm.

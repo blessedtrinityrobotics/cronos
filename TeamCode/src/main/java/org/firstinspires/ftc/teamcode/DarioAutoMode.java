@@ -23,7 +23,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
  */
 
 @Autonomous(name = "Dario Auto", group = "Cronos")
-//@Disabled
+@Disabled
 public class DarioAutoMode extends WheeledBotHardware {
 
     /**

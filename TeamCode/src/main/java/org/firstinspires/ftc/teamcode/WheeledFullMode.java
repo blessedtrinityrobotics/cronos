@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name="TeleOp", group="Cronos")
 //@Disabled
@@ -18,7 +19,6 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         //Set drive mode
         setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
         //Set drive mode
         setElevatorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -49,6 +49,27 @@ public class WheeledFullMode extends WheeledBotHardware {
         double right   = -gamepad1.right_stick_x;
         double turn    =  gamepad1.left_stick_x;
         double lift    = -gamepad2.left_stick_y;
+        double SlideOut = gamepad2.right_stick_y;
+        double SlideLift = gamepad2.right_stick_x;
+        double SlidePower = SlideOut;
+        double SlideLiftPower = SlideLift;
+        SlidePower = Range.clip(SlidePower, -1.0, 1.0);
+        SlideLiftPower = Range.clip(SlideLiftPower, -0.5, 0.5);
+        LinSlideMotor.setPower(SlidePower);
+        LinSlideUpDown.setPower(SlideLiftPower);
+
+        // relic servo actuator
+        double relicpos = relic.getPosition();
+        if ( gamepad2.right_bumper){
+            relic.setPosition( Range.clip(relicpos + 0.05, 0.0, 1.0));
+        }
+
+        if ( gamepad2.left_bumper){
+            relic.setPosition( Range.clip(relicpos - 0.05, 0.0, 1.0));
+        }
+
+        //if ( !gamepad2.left_bumper && !gamepad2.right_bumper)
+        //    relic.setPosition(0.5);
 
         forward = (float) scaleInput(forward);
         right   = (float) scaleInput(right);
@@ -75,9 +96,6 @@ public class WheeledFullMode extends WheeledBotHardware {
             balanceDown();
         }
 
-
-
-
         //Set the power of the elevator
         if ( Math.abs(lift) > 0.01f)
             moveElevator(lift);
@@ -87,6 +105,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         //Set the power of the motors with the gamepad values
         setDrivePower(driveMagnitude * forward, driveMagnitude * right, turn);
 
+        telemetry.addData("relic", String.format("%.2f", relic.getPosition()));
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         //telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
         //telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));

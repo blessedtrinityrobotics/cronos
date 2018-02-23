@@ -39,7 +39,14 @@ public class WheeledAutoMode extends WheeledBotHardware {
         Bump,       // move a bit to bump the ball
         Wait,
         RaiseArm,   // raise joule arm
+        Foward, //Go foward corresponding to Vuforia
+        Turn, //Turn right 90 degrees
+        Place,  //Go foward to place block
+        Drop, //Drop the block
+        Back,  //Backup
         Stop                // stop the robot
+
+
     }
 
     public boolean redTeam;   // true if we are red team; false otherwise
@@ -233,7 +240,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
 
             case Bump: {
                 // let motors run for a period of time
-                if ( getRuntime() - timestamp > 1.5) {
+                if ( getRuntime() - timestamp > 1.0) {
                     state = BehaviorState.Stop;
                     timestamp = getRuntime();   // mark current time
     }
@@ -245,6 +252,18 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 jouleArmUp();
             }
             break;
+
+            case Foward: {
+                if ( vuMark == RelicRecoveryVuMark.LEFT) {
+
+                }
+                else if ( vuMark == RelicRecoveryVuMark.CENTER) {
+
+                }
+                else if ( vuMark == RelicRecoveryVuMark.RIGHT) {
+
+                }
+            }
         }
 
         telemetry.addData("state", "%s", state);
