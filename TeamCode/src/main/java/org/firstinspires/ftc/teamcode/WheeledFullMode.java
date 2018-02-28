@@ -105,6 +105,11 @@ public class WheeledFullMode extends WheeledBotHardware {
             relic.setPosition(0.0);
         }
 
+        if (gamepad1.x)
+            moveElevatorToPos(-1200);
+        if (gamepad1.y)
+            moveElevatorToPos(0);
+
         //Set the power of the elevator
         if ( Math.abs(lift) > 0.01f)
             moveElevator(lift);
@@ -115,7 +120,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         setDrivePower(driveMagnitude * forward, driveMagnitude * right, turn);
 
         //telemetry.addData("relic", String.format("%.2f", relic.getPosition()));
-        telemetry.addData("elev", String.format("%d", elvMotor.getCurrentPosition()));
+        telemetry.addData("elev", "mode: %s  %d", elvMotor.getMode(), elvMotor.getCurrentPosition());
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         //telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
         //telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));

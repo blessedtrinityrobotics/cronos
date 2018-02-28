@@ -198,7 +198,8 @@ public class WheeledAutoMode extends WheeledBotHardware {
         switch (state) {
             case LowerJouleArm: {
                 jouleArmDown();
-                if (joule.getPosition() > .85 ) {
+                // wait until joule position is 90% the target value
+                if (joule.getPosition() > (JOULE_DOWN * .90) ) {
                     state = BehaviorState.LowerElv;
                     timestamp = getRuntime();   // mark current time
                 }
@@ -242,11 +243,17 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 double bumpPower = redTeam ? -0.2 : 0.2;
 
                 if (redAhead) {
-                    // move in direction to knock down opposite color
-                    setDrivePower( bumpPower, 0.0, 0.0);
+                    // move straight in direction to knock down opposite color
+                    //setDrivePower( bumpPower, 0.0, 0.0);
+
+                    // turn in the direction to knock down opposite color
+                    setDrivePower( 0.0, 0.0, -bumpPower);
                 } else {
                     // move opposite to knock down opposite color
-                    setDrivePower(-bumpPower, 0.0, 0.0);
+                    //setDrivePower(-bumpPower, 0.0, 0.0);
+
+                    // turn in the direction to knock down opposite color
+                    setDrivePower(0.0, 0.0, bumpPower);
                 }
 
                 /*during competition 11/11/17, the time and power works fine when red = true
@@ -291,7 +298,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
         telemetry.addData("elev:", "%s: %d", elvMotor.getMode().toString(), elvMotor.getCurrentPosition());
         telemetry.addData("isRed", String.format("%b", redAhead));
         telemetry.addData("joule", joule.getPosition());
-        telemetry.addData("pos  ", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
+        telemetry.addData("pos  ", String.format("x:%4.0f y:%4.0f h:%6.2f", positionX, positionY, heading));
 
 
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));

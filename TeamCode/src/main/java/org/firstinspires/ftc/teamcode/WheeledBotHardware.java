@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,6 +11,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+
 /**
  * Base class for the op-modes for the Clock robot (FTC team 9785 / Cronos).
  *
@@ -35,7 +43,7 @@ public class WheeledBotHardware extends OpMode {
     final double BALANCE_DOWN          = 0.2;
 
     final double JOULE_UP            = 0.225;
-    final double JOULE_DOWN          = 0.855;
+    final double JOULE_DOWN          = 0.82;
 
     DcMotor leftRearMotor;
     DcMotor leftFrontMotor;
@@ -189,9 +197,22 @@ public class WheeledBotHardware extends OpMode {
         } catch (Exception ex) {
             sb.append("ERR ");
         }
-        sb.append("ime ");
+        sb.append("imu: ");
         try {
-            //gyroSensor = hardwareMap..get("gyro");
+            BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+            parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+            parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+            //parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+            parameters.loggingEnabled      = true;
+            parameters.loggingTag          = "IMU";
+            parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+            imu = hardwareMap.get(BNO055IMU.class, "imu");
+            imu.initialize(parameters);
+
+            // Start the logging of measured acceleration
+            imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
             sb.append("OK ");
         } catch (Exception ex) {
             sb.append("ERR ");
@@ -288,23 +309,27 @@ public class WheeledBotHardware extends OpMode {
          }
          ***/
 
-        // signal reset done when ready
-        DcMotor.RunMode mode = elvMotor.getMode();
-        if ( mode == DcMotor.RunMode.STOP_AND_RESET_ENCODER && elvMotor.getCurrentPosition() == 0) {
-            elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        }
-        else if (mode != DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
-            // force a power mode until we detect it
-            elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        }
+//        // signal reset done when ready
+//        DcMotor.RunMode mode = elvMotor.getMode();
+//        if ( mode == DcMotor.RunMode.STOP_AND_RESET_ENCODER && elvMotor.getCurrentPosition() == 0) {
+//            elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        }
+//        else if (mode != DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
+//            // force a power mode until we detect it
+//            elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        }
 
 
         // update absolution position
         //updatePosition();
 
-//        if ( orientation != null && gyroSensor != null && !gyroSensor.isCalibrating()) {
-//            orientation.update( gyroSensor.rawX(), gyroSensor.rawY(), gyroSensor.rawZ());
-//        }
+
+        if ( imu != null ) {
+            heading = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+            Position pos = imu.getPosition();
+            positionX = pos.x;
+            positionY = pos.y;
+        }
     }
 
 
@@ -427,7 +452,11 @@ public class WheeledBotHardware extends OpMode {
         //Clip the power values so that it only goes from -1 to 1
         power = Range.clip(power, -1, 1);
 
-        if (elvMotor != null && elvMotor.getMode() == DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
+        if (elvMotor != null ) {
+            // set motor to the correct mode (if necessary)
+            if ( elvMotor.getMode() != DcMotor.RunMode.RUN_WITHOUT_ENCODER)
+                elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
             boolean atLowerLimit = armTouch != null && armTouch.isPressed();
             boolean atUpperLimit = false; //elvMotor.getCurrentPosition() > 2000;
 
@@ -455,14 +484,27 @@ public class WheeledBotHardware extends OpMode {
     /**
      * Move the arm with the specified power: positive value raises the arm.
      *
-     * @param position the power level: positive (up)/negative (down)
+     * @param target the power level: positive (up)/negative (down)
      */
-    void moveElevatorToPos(int position) {
+    void moveElevatorToPos(int target) {
         //Clip the power values so that it only goes from -1 to 1
         //power = Range.clip(power, -1, 1);
 
-        if (elvMotor != null && elvMotor.getMode() == DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
-            elvMotor.setTargetPosition(position);
+        if (elvMotor != null ) {
+            // set motor to the correct mode (if necessary)
+            if (elvMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION)
+                elvMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // get current position
+            int pos = elvMotor.getCurrentPosition();
+
+            // set where we want to move
+            elvMotor.setTargetPosition(target);
+
+            // set the speed
+            double sign = Math.signum(target - pos);
+            elvMotor.setPower(sign * 0.5);
+
         }
     }
 
@@ -470,7 +512,9 @@ public class WheeledBotHardware extends OpMode {
      * Stop arm movement.
      */
     void stopElevator() {
-        if (elvMotor != null) {
+        if (elvMotor != null ) {
+            if (elvMotor.getMode() != DcMotor.RunMode.RUN_WITHOUT_ENCODER)
+                elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             elvMotor.setPower(0);
         }
     }
