@@ -15,7 +15,7 @@ public class WheeledAutoModeBlue extends WheeledAutoMode {
     public void start() {
         super.start();
 
-        // we are nlue team
+        // we are blue team
         redTeam = false;
     }
 

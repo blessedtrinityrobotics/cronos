@@ -34,7 +34,9 @@ public class WheeledAutoMode extends WheeledBotHardware {
     public double OffsetY = 0.0;
 
     public enum BehaviorState {
-        LowerArm,   // lower joule arm
+        LowerJouleArm, // lower joule arm
+        LowerElv, //Lowers Elevator
+        RaiseElev, //Stops the Elevator
         Check,      // check color of ball
         Bump,       // move a bit to bump the ball
         Wait,
@@ -73,7 +75,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
         setElevatorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //Set gripper to open
-        openWideGripper();
+        openGripper();
 
         //Raise joule arm
         jouleArmUp();
@@ -82,7 +84,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
         balanceUp();
 
         // set initial state
-        state = BehaviorState.LowerArm;
+        state = BehaviorState.LowerJouleArm;
 
         /*
          * To start up Vuforia, tell it the view that we wish to use for camera monitor (on the RC phone);
@@ -194,14 +196,32 @@ public class WheeledAutoMode extends WheeledBotHardware {
         boolean redAhead = (colorSensor.red() - colorSensor.blue()) > 10;
 
         switch (state) {
-            case LowerArm: {
+            case LowerJouleArm: {
                 jouleArmDown();
-                closeGripper();
-                if (joule.getPosition() > .85 && (getRuntime() - timestamp) > 2) {
+                if (joule.getPosition() > .85 ) {
+                    state = BehaviorState.LowerElv;
+                    timestamp = getRuntime();   // mark current time
+                }
+            }
+            break;
+
+            case LowerElv: {
+                moveElevatorToPos(-1200);
+                if (elvMotor.getCurrentPosition() < -1180 ) {
+                    closeGripper();
+                    state = BehaviorState.RaiseElev;
+                    timestamp = getRuntime();   // mark current time
+                }
+            }
+                break;
+            case RaiseElev: {
+                moveElevatorToPos(0);
+                if (elvMotor.getCurrentPosition() > -20 ) {
                     state = BehaviorState.Check;
                     timestamp = getRuntime();   // mark current time
                 }
             }
+
             break;
 /*
             case Wait:
@@ -268,6 +288,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
 
         telemetry.addData("state", "%s", state);
         //telemetry.addData("color", String.format("r:%d g:%d b:%d", colorSensor.red(), colorSensor.green(), colorSensor.blue()));
+        telemetry.addData("elev:", "%s: %d", elvMotor.getMode().toString(), elvMotor.getCurrentPosition());
         telemetry.addData("isRed", String.format("%b", redAhead));
         telemetry.addData("joule", joule.getPosition());
         telemetry.addData("pos  ", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));

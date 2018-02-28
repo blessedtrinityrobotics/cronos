@@ -20,14 +20,16 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class WheeledBotHardware extends OpMode {
 
-    final double LEFT_OPEN_WIDE_POSITION  =  0.0;
-    final double LEFT_OPEN_POSITION       =  0.3;
-    final double LEFT_CLOSED_POSITION     =  0.535;
+    final double LEFT_OPEN_WIDE_POSITION  =  0.1;
+    final double LEFT_OPEN_POSITION       =  0.4;
+    final double LEFT_CLOSED_POSITION     =  0.6;
     final double LEFT_PUSH_POSITION       =  0.9;
-    final double RIGHT_OPEN_WIDE_POSITION =  1.0;
-    final double RIGHT_OPEN_POSITION      =  0.7;
-    final double RIGHT_CLOSED_POSITION    =  0.465;
+    final double RIGHT_OPEN_WIDE_POSITION =  0.9;
+    final double RIGHT_OPEN_POSITION      =  0.6;
+    final double RIGHT_CLOSED_POSITION    =  0.4;
     final double RIGHT_PUSH_POSITION      =  0.9;
+    //final double RELIC_OPEN               = 0.1;
+    //final double RELIC_CLOSE              = 0.3;
 
     final double BALANCE_UP            = 0.9;
     final double BALANCE_DOWN          = 0.2;
@@ -286,6 +288,17 @@ public class WheeledBotHardware extends OpMode {
          }
          ***/
 
+        // signal reset done when ready
+        DcMotor.RunMode mode = elvMotor.getMode();
+        if ( mode == DcMotor.RunMode.STOP_AND_RESET_ENCODER && elvMotor.getCurrentPosition() == 0) {
+            elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        else if (mode != DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
+            // force a power mode until we detect it
+            elvMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+
+
         // update absolution position
         //updatePosition();
 
@@ -357,6 +370,16 @@ public class WheeledBotHardware extends OpMode {
             bottomLeftGrip.setPosition(LEFT_PUSH_POSITION);
     }
 
+    /*void RelicDown() {
+        if (relic != null)
+            relic.setPosition(RELIC_CLOSE);
+    }
+
+    void RelicUp() {
+        if (relic != null)
+            relic.setPosition(RELIC_OPEN);
+    }
+    */
     /**
      * Raise the balance
      */
@@ -426,6 +449,20 @@ public class WheeledBotHardware extends OpMode {
 
             // ok send the power level
             elvMotor.setPower(power);
+        }
+    }
+
+    /**
+     * Move the arm with the specified power: positive value raises the arm.
+     *
+     * @param position the power level: positive (up)/negative (down)
+     */
+    void moveElevatorToPos(int position) {
+        //Clip the power values so that it only goes from -1 to 1
+        //power = Range.clip(power, -1, 1);
+
+        if (elvMotor != null && elvMotor.getMode() == DcMotor.RunMode.RUN_WITHOUT_ENCODER) {
+            elvMotor.setTargetPosition(position);
         }
     }
 

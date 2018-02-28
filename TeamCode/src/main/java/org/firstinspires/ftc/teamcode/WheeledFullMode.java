@@ -23,7 +23,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         setElevatorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //Set gripper to open
-        openWideGripper();
+        openGripper();
 
         //Raise joule arm
         jouleArmUp();
@@ -59,7 +59,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         LinSlideUpDown.setPower(SlideLiftPower);
 
         // relic servo actuator
-        double relicpos = relic.getPosition();
+    /*    double relicpos = relic.getPosition();
         if ( gamepad2.right_bumper){
             relic.setPosition( Range.clip(relicpos + 0.05, 0.0, 1.0));
         }
@@ -70,7 +70,7 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         //if ( !gamepad2.left_bumper && !gamepad2.right_bumper)
         //    relic.setPosition(0.5);
-
+*/
         forward = (float) scaleInput(forward);
         right   = (float) scaleInput(right);
         turn    = (float) scaleInput(turn);
@@ -83,6 +83,7 @@ public class WheeledFullMode extends WheeledBotHardware {
             openWideGripper();
             //driveMagnitude = 0.4f;
         }
+
         if (gamepad2.a) {
             closeGripper();
             //driveMagnitude = 0.18f;
@@ -92,8 +93,16 @@ public class WheeledFullMode extends WheeledBotHardware {
             //driveMagnitude = 0.18f;
         }
 
-        if (gamepad2.x) {
-            balanceDown();
+       if (gamepad2.x) {
+            relic.setPosition(0.9);
+        }
+
+        if (gamepad2.left_bumper) {
+            relic.setPosition(0.2);
+        }
+
+        if (gamepad2.right_bumper) {
+            relic.setPosition(0.0);
         }
 
         //Set the power of the elevator
@@ -105,7 +114,8 @@ public class WheeledFullMode extends WheeledBotHardware {
         //Set the power of the motors with the gamepad values
         setDrivePower(driveMagnitude * forward, driveMagnitude * right, turn);
 
-        telemetry.addData("relic", String.format("%.2f", relic.getPosition()));
+        //telemetry.addData("relic", String.format("%.2f", relic.getPosition()));
+        telemetry.addData("elev", String.format("%d", elvMotor.getCurrentPosition()));
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         //telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
         //telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
