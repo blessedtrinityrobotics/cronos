@@ -270,7 +270,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 if ( getRuntime() - timestamp > 1.0) {
                     state = BehaviorState.Stop;
                     timestamp = getRuntime();   // mark current time
-    }
+                }
             }
             break;
 
