@@ -42,9 +42,9 @@ public class WheeledAutoMode extends WheeledBotHardware {
         Bump,       // move a bit to bump the ball
         Wait,
         RaiseJouleArm,   // raise joule arm
-        Foward, //Go foward corresponding to Vuforia
+        Forward, //Go foward corresponding to Vuforia
         Turn, //Turn right 90 degrees
-        Place,  //Go foward to place block
+        Orient,  //face straight before moving forward
         Drop, //Drop the block
         Back,  //Backup
         Approach, // Move towards the columns
@@ -86,8 +86,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
         balanceUp();
 
         // set initial state
-        //state = BehaviorState.LowerJouleArm;
-        state = BehaviorState.Foward;
+        state = BehaviorState.LowerJouleArm;
 
         /*
          * To start up Vuforia, tell it the view that we wish to use for camera monitor (on the RC phone);
@@ -287,7 +286,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 // wait until joule position is 110% the target value
                 if (joule.getPosition() < (JOULE_UP * 1.1) ) {
                     // next state
-                    state = BehaviorState.Foward;
+                    state = BehaviorState.Orient;
                     timestamp = getRuntime();   // mark current time
                 }
             }
@@ -297,20 +296,23 @@ public class WheeledAutoMode extends WheeledBotHardware {
             }
             break;
 
-            case Foward: {
+            case Forward: {
 
                 // define goals
                 float distance = 36.0f;
                 int   target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
 
                 if ( vuMark == RelicRecoveryVuMark.LEFT) {
-
+                    distance = 36.0f;
+                    target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
                 }
                 else if ( vuMark == RelicRecoveryVuMark.CENTER) {
-
+                    distance = 36.0f;
+                    target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
                 }
                 else if ( vuMark == RelicRecoveryVuMark.RIGHT) {
-
+                    distance = 36.0f;
+                    target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
                 }
 
                 if ( leftRearMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
@@ -326,6 +328,27 @@ public class WheeledAutoMode extends WheeledBotHardware {
             }
             break;
 
+            case Orient:
+            {
+                // define goals
+                double target = 0.0;
+                double turn = 0.5 * Range.clip(-(target - heading) / 15.0, -1, 1);
+
+                double sign = Math.signum(turn);
+                turn = sign * Math.max(Math.abs(turn), 0.01);
+                setDrivePower(0.0, 0.0, turn);
+
+                if (  Math.abs(target - heading) < 1.0) {
+
+                    resetDriveEncoders();
+
+                    // next state
+                    state = BehaviorState.Forward;
+                    timestamp = getRuntime();
+                }
+            }
+            break;
+
             case Turn:
             {
                 // define goals
@@ -337,6 +360,9 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 setDrivePower(0.0, 0.0, turn);
 
                 if (  Math.abs(target - heading) < 3.0) {
+
+                    resetDriveEncoders();
+
                     // open griper
                     openGripper();
 
@@ -350,6 +376,27 @@ public class WheeledAutoMode extends WheeledBotHardware {
             case Approach:
             {
                 float distance = 3.0f;
+                int   target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
+
+                // issue command
+                if ( leftRearMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    moveRobotForwardToPos(distance, 0.5);
+                }
+
+                int pos = (leftRearMotor.getCurrentPosition() + rightRearMotor.getCurrentPosition() + leftFrontMotor.getCurrentPosition() + rightFrontMotor.getCurrentPosition()) / 4;
+                if (pos > target ) {
+                    resetDriveEncoders();
+
+                    // next state
+                    state = BehaviorState.Back;
+                    timestamp = getRuntime();   // mark current time
+                }
+            }
+            break;
+
+            case Back:
+            {
+                float distance = -3.0f;
                 int   target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
 
                 // issue command
