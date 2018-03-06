@@ -41,12 +41,13 @@ public class WheeledAutoMode extends WheeledBotHardware {
         Check,      // check color of ball
         Bump,       // move a bit to bump the ball
         Wait,
-        RaiseArm,   // raise joule arm
+        RaiseJouleArm,   // raise joule arm
         Foward, //Go foward corresponding to Vuforia
         Turn, //Turn right 90 degrees
         Place,  //Go foward to place block
         Drop, //Drop the block
         Back,  //Backup
+        Approach, // Move towards the columns
         Stop                // stop the robot
 
 
@@ -202,6 +203,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 jouleArmDown();
                 // wait until joule position is 90% the target value
                 if (joule.getPosition() > (JOULE_DOWN * .90) ) {
+                    // next state
                     state = BehaviorState.LowerElv;
                     timestamp = getRuntime();   // mark current time
                 }
@@ -212,6 +214,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 moveElevatorToPos(-1200);
                 if (elvMotor.getCurrentPosition() < -1180 ) {
                     closeGripper();
+                    // next state
                     state = BehaviorState.RaiseElev;
                     timestamp = getRuntime();   // mark current time
                 }
@@ -220,6 +223,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
             case RaiseElev: {
                 moveElevatorToPos(0);
                 if (elvMotor.getCurrentPosition() > -20 ) {
+                    // next state
                     state = BehaviorState.Check;
                     timestamp = getRuntime();   // mark current time
                 }
@@ -262,6 +266,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 when red = false, it does not seem to move far enough to knock the ball off every  time
                  */
 
+                // next state
                 state = BehaviorState.Bump;
                 timestamp = getRuntime();   // mark current time
             }
@@ -270,21 +275,34 @@ public class WheeledAutoMode extends WheeledBotHardware {
             case Bump: {
                 // let motors run for a period of time
                 if ( getRuntime() - timestamp > 1.0) {
-                    state = BehaviorState.Stop;
+                    // next state
+                    state = BehaviorState.RaiseJouleArm;
                     timestamp = getRuntime();   // mark current time
                 }
             }
             break;
 
+            case RaiseJouleArm: {
+                jouleArmUp();
+                // wait until joule position is 110% the target value
+                if (joule.getPosition() < (JOULE_UP * 1.1) ) {
+                    // next state
+                    state = BehaviorState.Foward;
+                    timestamp = getRuntime();   // mark current time
+                }
+            }
+
             case Stop: {
                 setDrivePower(0.0, 0.0, 0.0);
-                jouleArmUp();
             }
             break;
 
             case Foward: {
 
+                // define goals
                 float distance = 36.0f;
+                int   target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
+
                 if ( vuMark == RelicRecoveryVuMark.LEFT) {
 
                 }
@@ -295,13 +313,13 @@ public class WheeledAutoMode extends WheeledBotHardware {
 
                 }
 
-                int target = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
                 if ( leftRearMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
                     moveRobotForwardToPos(distance, 0.5);
                 }
 
                 int pos = (leftRearMotor.getCurrentPosition() + rightRearMotor.getCurrentPosition() + leftFrontMotor.getCurrentPosition() + rightFrontMotor.getCurrentPosition()) / 4;
                 if (pos > target ) {
+                    // next state
                     state = BehaviorState.Turn;
                     timestamp = getRuntime();   // mark current time
                 }
@@ -310,6 +328,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
 
             case Turn:
             {
+                // define goals
                 double target = -90.0;
                 double turn = 0.5 * Range.clip(-(target - heading) / 25.0, -1, 1);
 
@@ -318,10 +337,31 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 setDrivePower(0.0, 0.0, turn);
 
                 if (  Math.abs(target - heading) < 3.0) {
-                    state = BehaviorState.Stop;
+                    // open griper
+                    openGripper();
+
+                    // next state
+                    state = BehaviorState.Approach;
                     timestamp = getRuntime();
                 }
+            }
+            break;
 
+            case Approach:
+            {
+                float distance = 3.0f;
+                int   target   = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
+
+                // issue command
+                if ( leftRearMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    moveRobotForwardToPos(distance, 0.5);
+                }
+
+                int pos = (leftRearMotor.getCurrentPosition() + rightRearMotor.getCurrentPosition() + leftFrontMotor.getCurrentPosition() + rightFrontMotor.getCurrentPosition()) / 4;
+                if (pos > target ) {
+                    state = BehaviorState.Stop;
+                    timestamp = getRuntime();   // mark current time
+                }
             }
             break;
         }
