@@ -311,7 +311,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
             case Turn:
             {
                 double target = -90.0;
-                double turn = Range.clip((target - heading) / 25.0, -1, 1);
+                double turn = 0.5 * Range.clip(-(target - heading) / 25.0, -1, 1);
 
                 double sign = Math.signum(turn);
                 turn = sign * Math.max(Math.abs(turn), 0.05);
