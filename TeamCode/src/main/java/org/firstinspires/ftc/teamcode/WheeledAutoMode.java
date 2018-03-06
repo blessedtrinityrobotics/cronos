@@ -245,7 +245,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
 */
             case Check: {
                 // bumpPower sets the direction of the bump: + is forward, - is backwards
-                double bumpPower = redTeam ? -0.2 : 0.2;
+                double bumpPower = redTeam ? -0.25 : 0.25;
 
                 if (redAhead) {
                     // move straight in direction to knock down opposite color
@@ -332,7 +332,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
             {
                 // define goals
                 double target = 0.0;
-                double turn = 0.1 * Range.clip(-(target - heading) / 15.0, -1, 1);
+                double turn = 0.25 * Range.clip(-(target - heading) / 10.0, -1, 1);
 
                 double sign = Math.signum(turn);
                 turn = sign * Math.max(Math.abs(turn), 0.01);
@@ -415,10 +415,11 @@ public class WheeledAutoMode extends WheeledBotHardware {
 
         telemetry.addData("state", "%s", state);
         //telemetry.addData("color", String.format("r:%d g:%d b:%d", colorSensor.red(), colorSensor.green(), colorSensor.blue()));
-        telemetry.addData("drive:", "%s: %d", leftRearMotor.getMode().toString(), leftRearMotor.getCurrentPosition());
+        telemetry.addData("drive", "%s: %d", leftRearMotor.getMode().toString(), leftRearMotor.getCurrentPosition());
         telemetry.addData("isRed", String.format("%b", redAhead));
-        telemetry.addData("joule", joule.getPosition());
+        //telemetry.addData("joule", joule.getPosition());
         telemetry.addData("pos  ", String.format("x:%4.0f y:%4.0f h:%6.2f", positionX, positionY, heading));
+        telemetry.addData("vumark", vuMark.toString());
 
 
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
