@@ -332,7 +332,7 @@ public class WheeledAutoMode extends WheeledBotHardware {
             {
                 // define goals
                 double target = 0.0;
-                double turn = 0.5 * Range.clip(-(target - heading) / 15.0, -1, 1);
+                double turn = 0.1 * Range.clip(-(target - heading) / 15.0, -1, 1);
 
                 double sign = Math.signum(turn);
                 turn = sign * Math.max(Math.abs(turn), 0.01);
