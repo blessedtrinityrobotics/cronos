@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -84,7 +85,8 @@ public class WheeledAutoMode extends WheeledBotHardware {
         balanceUp();
 
         // set initial state
-        state = BehaviorState.LowerJouleArm;
+        //state = BehaviorState.LowerJouleArm;
+        state = BehaviorState.Foward;
 
         /*
          * To start up Vuforia, tell it the view that we wish to use for camera monitor (on the RC phone);
@@ -281,6 +283,8 @@ public class WheeledAutoMode extends WheeledBotHardware {
             break;
 
             case Foward: {
+
+                float distance = 36.0f;
                 if ( vuMark == RelicRecoveryVuMark.LEFT) {
 
                 }
@@ -290,12 +294,41 @@ public class WheeledAutoMode extends WheeledBotHardware {
                 else if ( vuMark == RelicRecoveryVuMark.RIGHT) {
 
                 }
+
+                int target = (int)(distance / (Math.PI * WHEEL_DIAMETER) * 280.0 * 0.95);
+                if ( leftRearMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    moveRobotForwardToPos(distance, 0.5);
+                }
+
+                int pos = (leftRearMotor.getCurrentPosition() + rightRearMotor.getCurrentPosition() + leftFrontMotor.getCurrentPosition() + rightFrontMotor.getCurrentPosition()) / 4;
+                if (pos > target ) {
+                    state = BehaviorState.Turn;
+                    timestamp = getRuntime();   // mark current time
+                }
             }
+            break;
+
+            case Turn:
+            {
+                double target = -90.0;
+                double turn = Range.clip((target - heading) / 25.0, -1, 1);
+
+                double sign = Math.signum(turn);
+                turn = sign * Math.max(Math.abs(turn), 0.05);
+                setDrivePower(0.0, 0.0, turn);
+
+                if (  Math.abs(target - heading) < 3.0) {
+                    state = BehaviorState.Stop;
+                    timestamp = getRuntime();
+                }
+
+            }
+            break;
         }
 
         telemetry.addData("state", "%s", state);
         //telemetry.addData("color", String.format("r:%d g:%d b:%d", colorSensor.red(), colorSensor.green(), colorSensor.blue()));
-        telemetry.addData("elev:", "%s: %d", elvMotor.getMode().toString(), elvMotor.getCurrentPosition());
+        telemetry.addData("drive:", "%s: %d", leftRearMotor.getMode().toString(), leftRearMotor.getCurrentPosition());
         telemetry.addData("isRed", String.format("%b", redAhead));
         telemetry.addData("joule", joule.getPosition());
         telemetry.addData("pos  ", String.format("x:%4.0f y:%4.0f h:%6.2f", positionX, positionY, heading));

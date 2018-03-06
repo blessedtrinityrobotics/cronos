@@ -121,6 +121,7 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         //telemetry.addData("relic", String.format("%.2f", relic.getPosition()));
         telemetry.addData("elev", "mode: %s  %d", elvMotor.getMode(), elvMotor.getCurrentPosition());
+        telemetry.addData("pos  ", String.format("x:%4.0f y:%4.0f h:%6.2f", positionX, positionY, heading));
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         //telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
         //telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));

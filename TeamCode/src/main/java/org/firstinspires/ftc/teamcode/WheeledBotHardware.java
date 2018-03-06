@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
@@ -45,6 +44,8 @@ public class WheeledBotHardware extends OpMode {
     final double JOULE_UP            = 0.225;
     final double JOULE_DOWN          = 0.82;
 
+    final float  WHEEL_DIAMETER      = 4.0f / 4.11f;
+
     DcMotor leftRearMotor;
     DcMotor leftFrontMotor;
     DcMotor rightRearMotor;
@@ -59,7 +60,6 @@ public class WheeledBotHardware extends OpMode {
     Servo relic;
 
     BNO055IMU imu;
-    GyroSensor gyroSensor;
     ColorSensor colorSensor;
     DcMotor LinSlideUpDown = null;
     DcMotor LinSlideMotor = null;
@@ -67,7 +67,6 @@ public class WheeledBotHardware extends OpMode {
     TouchSensor armTouch;
     TouchSensor beaconTouch;
     OpticalDistanceSensor opticalDistanceSensor;
-    //GyroIntegrator orientation;
 
     private int prevLeftRearStep;
     private int prevLeftFrontStep;
@@ -257,23 +256,6 @@ public class WheeledBotHardware extends OpMode {
         if (elvMotor != null)
             elvMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        // calibrate gyro
-//        if (gyroSensor != null) {
-//            gyroSensor.calibrate();
-//
-//            // make sure the gyro is calibrated
-//            while (gyroSensor.isCalibrating()) {
-//                try {
-//                    Thread.sleep(50);
-//                }
-//                catch(InterruptedException ex) {
-//                    sb.append(String.format("exception: %s", ex.toString()));
-//                }
-//            }
-//
-//            orientation = new GyroIntegrator();
-//        }
-
         //Set gripper to close
         //closeGripper();
 
@@ -285,7 +267,6 @@ public class WheeledBotHardware extends OpMode {
 
         //Report status
         telemetry.addData("Status", sb.toString());
-
     }
 
     @Override
@@ -320,16 +301,15 @@ public class WheeledBotHardware extends OpMode {
 //        }
 
 
-        // update absolution position
-        //updatePosition();
-
-
         if ( imu != null ) {
             heading = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
-            Position pos = imu.getPosition();
-            positionX = pos.x;
-            positionY = pos.y;
+            //Position pos = imu.getPosition();
+            //positionX = pos.x;
+            //positionY = pos.y;
         }
+
+        // update absolution position
+        updatePosition();
     }
 
 
@@ -509,6 +489,38 @@ public class WheeledBotHardware extends OpMode {
     }
 
     /**
+     * Move the robot a specified distance in the forward axis.
+     * @param forward   the distance to move forward in inches
+     * @param power     the move power to use
+     */
+    void moveRobotForwardToPos(float forward, double power) {
+        // compute the number of ticks each robot has to move
+
+        int fwd = (int)(280f * forward / (Math.PI * WHEEL_DIAMETER));
+        power = Range.clip(power, -1, 1);
+
+        setDriveMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        if (leftRearMotor != null)
+            leftRearMotor.setTargetPosition(fwd);
+        if (leftFrontMotor != null)
+            leftFrontMotor.setTargetPosition(fwd);
+        if (rightRearMotor != null)
+            rightRearMotor.setTargetPosition(fwd);
+        if (rightFrontMotor != null)
+            rightFrontMotor.setTargetPosition(fwd);
+
+        if (leftRearMotor != null)
+            leftRearMotor.setPower(power);
+        if (leftFrontMotor != null)
+            leftFrontMotor.setPower(power);
+        if (rightRearMotor != null)
+            rightRearMotor.setPower(power);
+        if (rightFrontMotor != null)
+            rightFrontMotor.setPower(power);
+    }
+
+    /**
      * Stop arm movement.
      */
     void stopElevator() {
@@ -558,10 +570,6 @@ public class WheeledBotHardware extends OpMode {
         if (rightFrontMotor != null)
             rightFrontMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        if (gyroSensor != null) {
-            gyroSensor.resetZAxisIntegrator();
-        }
-
         // reset relative variables
         prevLeftRearStep = 0;
         prevLeftFrontStep = 0;
@@ -575,7 +583,7 @@ public class WheeledBotHardware extends OpMode {
     }
 
     /**
-     * Use the motor encoders and the gyro sensor to update the absolute position of the robot.
+     * Use the motor encoders and the imu sensor to update the absolute position of the robot.
      */
     private void updatePosition() {
         double distance = 0;
@@ -605,19 +613,21 @@ public class WheeledBotHardware extends OpMode {
             motors += 1;
         }
 
-        if (motors > 0 && gyroSensor != null) {
-            // compute average of distance
+        if (motors > 0 && !Double.isNaN(heading)) {
+            // compute average of distance iin pulses
             distance = distance / motors;
 
+            // convert pulses to inches
+            distance = distance / 280.0 * Math.PI * WHEEL_DIAMETER;
+
             // read angle
-            int rawdeg = gyroSensor.getHeading();
-            heading = Math.toRadians(rawdeg);
+            double rad = Math.toRadians(heading);
 
             //telemetry.addData("raw", String.format("%d %.0f", raw, distance));
 
             // compute displacement
-            double dx = distance * Math.sin(heading);
-            double dy = distance * Math.cos(heading);
+            double dx = distance * Math.sin(rad);
+            double dy = distance * Math.cos(rad);
 
             // update position
             positionX = positionX + dx;
@@ -663,6 +673,8 @@ public class WheeledBotHardware extends OpMode {
         boolean stop = false;//opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && power > 0;
 
         if (!stop) {
+            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
             if (leftRearMotor != null)
                 leftRearMotor.setPower(power);
             if (leftFrontMotor != null)
@@ -689,6 +701,8 @@ public class WheeledBotHardware extends OpMode {
         boolean stop = false;//opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && (leftPower > 0 || rightPower > 0);
 
         if (!stop) {
+            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
             if (leftRearMotor != null)
                 leftRearMotor.setPower(leftPower);
             if (leftFrontMotor != null)
@@ -724,6 +738,8 @@ public class WheeledBotHardware extends OpMode {
         boolean stop = false;//opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && (leftPower > 0 || rightPower > 0);
 
         if (!stop) {
+            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
             if (leftRearMotor != null)
                 leftRearMotor.setPower(leftRearPower);
             if (leftFrontMotor != null)
